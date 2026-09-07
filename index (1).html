@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌟 MISI KATA PENGUAT 🌟 - Permainan Digital Interaktif BM Tahap 1</title>
+
+    <!-- Google Fonts for Tahap 1 friendly typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Styling and Keyframe Animations -->
+    <style>
+        * {
+            font-family: 'Fredoka', 'Nunito', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fef3c7 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background elements */
+        .floating-bg {
+            position: absolute;
+            z-index: 0;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(3deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .bounce-gentle {
+            animation: bounceGentle 2s infinite;
+        }
+
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .pulse-star {
+            animation: pulseStar 1.5s infinite alternate;
+        }
+
+        @keyframes pulseStar {
+            0% { transform: scale(1); filter: drop-shadow(0 0 2px #f59e0b); }
+            100% { transform: scale(1.15); filter: drop-shadow(0 0 10px #fbbf24); }
+        }
+
+        /* Glassmorphism card effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border: 4px solid #ffffff;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Custom buttons with tactile press effect */
+        .btn-interactive {
+            transition: all 0.15s ease;
+            box-shadow: 0 6px 0px rgba(0,0,0,0.15);
+        }
+
+        .btn-interactive:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0px rgba(0,0,0,0.15);
+        }
+
+        .btn-interactive:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px rgba(0,0,0,0.15);
+        }
+
+        .btn-choice {
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .btn-choice:hover {
+            transform: scale(1.03);
+        }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Matching Card States */
+        .match-card {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .match-card.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: scale(1.04);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+        }
+        .match-card.matched {
+            border-color: #10b981;
+            background-color: #d1fae5;
+            opacity: 0.6;
+            cursor: default;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen relative text-slate-800 antialiased selection:bg-amber-200">
+
+    <!-- Floating Decorative SVGs in Background -->
+    <div class="floating-bg top-10 left-8 text-amber-300 opacity-60 text-4xl hidden md:block">⭐</div>
+    <div class="floating-bg top-40 right-12 text-sky-300 opacity-60 text-5xl hidden md:block" style="animation-delay: -2s;">☁️</div>
+    <div class="floating-bg bottom-20 left-16 text-emerald-300 opacity-60 text-5xl hidden md:block" style="animation-delay: -4s;">✏️</div>
+    <div class="floating-bg bottom-12 right-20 text-pink-300 opacity-60 text-4xl hidden md:block" style="animation-delay: -1s;">📚</div>
+
+    <!-- Canvas For Victory Confetti -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- TOP HUD BAR (Visible during active gameplay) -->
+    <header id="hud-bar" class="hidden sticky top-0 z-40 bg-white/95 backdrop-blur shadow-md border-b-4 border-amber-300 px-4 py-2">
+        <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <!-- Player Badge -->
+            <div class="flex items-center gap-2 bg-sky-100 text-sky-800 px-3 py-1.5 rounded-full border border-sky-300 font-bold text-sm md:text-base shadow-sm">
+                <span class="text-xl">👦</span>
+                <span id="hud-player-name">Murid</span>
+            </div>
+
+            <!-- Misi Progress -->
+            <div class="flex items-center gap-2 bg-indigo-50 text-indigo-800 px-3 py-1.5 rounded-full border border-indigo-200 text-xs md:text-sm font-bold">
+                <span id="hud-mission-title">Misi 1</span>
+                <span id="hud-question-count" class="bg-indigo-600 text-white px-2 py-0.5 rounded-full text-xs">1/10</span>
+            </div>
+
+            <!-- Score & Stars HUD -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-400 text-amber-900 px-3 py-1 rounded-full text-sm md:text-base font-extrabold shadow-sm">
+                    <span class="pulse-star text-amber-500 text-lg">⭐</span>
+                    <span>MARKAH: <span id="hud-score" class="text-xl text-amber-600">0</span></span>
+                </div>
+                <div id="hud-stars" class="flex text-amber-400 text-lg md:text-xl tracking-tight">
+                    <span>⭐</span><span>⭐</span><span>⭐</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER FOR ALL GAME SCREENS -->
+    <main class="flex-grow flex items-center justify-center p-3 md:p-6 relative z-10">
+        <div class="w-full max-w-4xl mx-auto">
+
+            <!-- 1. PAPARAN MULA (Start Screen) -->
+            <section id="screen-start" class="glass-card rounded-3xl p-6 md:p-10 text-center max-w-2xl mx-auto relative overflow-hidden transition-all duration-300">
+                <!-- Mascot Header Banner -->
+                <div class="inline-block bg-amber-400 text-amber-950 font-black px-4 py-1.5 rounded-full text-xs md:text-sm uppercase tracking-wider shadow-sm mb-3">
+                    Bahan Pembelajaran Interaktif BM Tahap 1
+                </div>
+
+                <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600 mb-2 leading-tight">
+                    🌟 MISI KATA PENGUAT 🌟
+                </h1>
+
+                <p class="text-lg md:text-xl font-bold text-amber-600 mb-6 italic">
+                    “Kenal, Pilih, Main dan Kuasai!”
+                </p>
+
+                <!-- Student Cartoon SVG Avatar -->
+                <div class="w-36 h-36 md:w-44 md:h-44 mx-auto mb-6 relative bounce-gentle">
+                    <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-lg">
+                        <!-- Circle background -->
+                        <circle cx="100" cy="100" r="90" fill="#E0F2FE" stroke="#38BDF8" stroke-width="6"/>
+                        <!-- Hair -->
+                        <path d="M50,85 C50,45 150,45 150,85 C150,85 160,60 140,40 C120,20 80,20 60,40 C40,60 50,85 50,85 Z" fill="#3B2514"/>
+                        <!-- Head -->
+                        <ellipse cx="100" cy="100" rx="45" ry="48" fill="#FDE047"/>
+                        <ellipse cx="100" cy="100" rx="42" ry="45" fill="#FFEDD5"/>
+                        <!-- Cheeks -->
+                        <circle cx="75" cy="112" r="8" fill="#FCA5A5" opacity="0.6"/>
+                        <circle cx="125" cy="112" r="8" fill="#FCA5A5" opacity="0.6"/>
+                        <!-- Eyes -->
+                        <circle cx="80" cy="95" r="6" fill="#1E293B"/>
+                        <circle cx="120" cy="95" r="6" fill="#1E293B"/>
+                        <circle cx="82" cy="93" r="2" fill="#FFFFFF"/>
+                        <circle cx="122" cy="93" r="2" fill="#FFFFFF"/>
+                        <!-- Smile -->
+                        <path d="M85,118 Q100,135 115,118" fill="none" stroke="#991B1B" stroke-width="4" stroke-linecap="round"/>
+                        <!-- School Uniform Collar -->
+                        <path d="M60,150 L140,150 L130,190 L70,190 Z" fill="#0284C7"/>
+                        <path d="M85,150 L100,170 L115,150" fill="#FFFFFF"/>
+                        <!-- Pencil held up -->
+                        <g transform="translate(135, 110) rotate(-20)">
+                            <rect x="0" y="0" width="14" height="45" fill="#F59E0B" rx="2"/>
+                            <polygon points="0,45 7,60 14,45" fill="#FDBA74"/>
+                            <polygon points="4,53 7,60 10,53" fill="#1E293B"/>
+                            <rect x="0" y="-8" width="14" height="8" fill="#F43F5E" rx="1"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Input Name Form -->
+                <div class="bg-sky-50 p-5 rounded-2xl border-2 border-sky-200 mb-6 shadow-inner">
+                    <label for="player-name-input" class="block text-sky-900 font-extrabold text-base md:text-lg mb-2">
+                        ✍️ Sila Masukkan Nama Kamu:
+                    </label>
+                    <input type="text" id="player-name-input" placeholder="Contoh: Aina / Ali" 
+                        class="w-full text-center px-4 py-3 text-lg md:text-xl font-bold rounded-xl border-2 border-sky-300 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all bg-white"
+                        maxlength="20">
+                    <p id="name-error" class="text-rose-500 text-sm font-bold mt-2 hidden">⚠️ Sila masukkan nama kamu terlebih dahulu!</p>
+                </div>
+
+                <!-- Start Button -->
+                <button id="btn-start" class="btn-interactive w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xl md:text-2xl rounded-2xl shadow-lg flex items-center justify-center gap-3 border-b-4 border-emerald-800">
+                    <span>▶️ MULA MISI</span>
+                </button>
+            </section>
+
+            <!-- 2. PAPARAN PENERANGAN RINGKAS (Info Screen) -->
+            <section id="screen-info" class="glass-card rounded-3xl p-6 md:p-8 hidden">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-800 font-extrabold px-4 py-1.5 rounded-full text-sm mb-2">
+                        <span>📚 NOTA RINGKAS</span>
+                    </div>
+                    <h2 class="text-2xl md:text-4xl font-extrabold text-indigo-900">
+                        JOM KENALI KATA PENGUAT!
+                    </h2>
+                    <p class="text-slate-600 text-base md:text-lg mt-2 font-medium max-w-xl mx-auto">
+                        <strong class="text-indigo-600">Kata penguat</strong> digunakan untuk menguatkan maksud kata adjektif (sifat/keadaan).
+                    </p>
+                </div>
+
+                <!-- Examples Cards Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+                    <div class="bg-gradient-to-br from-pink-50 to-rose-100 p-3 md:p-4 rounded-2xl border-2 border-pink-200 text-center shadow-sm hover:shadow transition-all">
+                        <div class="text-2xl md:text-3xl mb-1">👸</div>
+                        <div class="font-extrabold text-pink-700 text-base md:text-lg">sangat cantik</div>
+                        <div class="text-xs text-slate-500 font-semibold mt-1">sangat + cantik</div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-blue-50 to-sky-100 p-3 md:p-4 rounded-2xl border-2 border-sky-200 text-center shadow-sm hover:shadow transition-all">
+                        <div class="text-2xl md:text-3xl mb-1">🐘</div>
+                        <div class="font-extrabold text-sky-700 text-base md:text-lg">amat besar</div>
+                        <div class="text-xs text-slate-500 font-semibold mt-1">amat + besar</div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-amber-50 to-orange-100 p-3 md:p-4 rounded-2xl border-2 border-amber-200 text-center shadow-sm hover:shadow transition-all">
+                        <div class="text-2xl md:text-3xl mb-1">☀️</div>
+                        <div class="font-extrabold text-amber-700 text-base md:text-lg">terlalu panas</div>
+                        <div class="text-xs text-slate-500 font-semibold mt-1">terlalu + panas</div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-purple-50 to-indigo-100 p-3 md:p-4 rounded-2xl border-2 border-purple-200 text-center shadow-sm hover:shadow transition-all">
+                        <div class="text-2xl md:text-3xl mb-1">🏔️</div>
+                        <div class="font-extrabold text-purple-700 text-base md:text-lg">paling tinggi</div>
+                        <div class="text-xs text-slate-500 font-semibold mt-1">paling + tinggi</div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-emerald-50 to-teal-100 p-3 md:p-4 rounded-2xl border-2 border-emerald-200 text-center shadow-sm hover:shadow transition-all">
+                        <div class="text-2xl md:text-3xl mb-1">🍯</div>
+                        <div class="font-extrabold text-emerald-700 text-base md:text-lg">manis sekali</div>
+                        <div class="text-xs text-slate-500 font-semibold mt-1">manis + sekali</div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-cyan-50 to-blue-100 p-3 md:p-4 rounded-2xl border-2 border-cyan-200 text-center shadow-sm hover:shadow transition-all">
+                        <div class="text-2xl md:text-3xl mb-1">🌺</div>
+                        <div class="font-extrabold text-cyan-700 text-base md:text-lg">cantik nian</div>
+                        <div class="text-xs text-slate-500 font-semibold mt-1">cantik + nian</div>
+                    </div>
+                </div>
+
+                <!-- Word List Cloud -->
+                <div class="bg-amber-50 border-2 border-amber-200 p-4 rounded-2xl mb-6">
+                    <p class="text-xs md:text-sm font-extrabold text-amber-800 uppercase tracking-wider mb-2 text-center">
+                        🎯 Kata Penguat Yang Akan Kamu Pelajari:
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">sangat</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">sekali</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">nian</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">amat</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">paling</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">agak</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">cukup</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">makin</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">terlalu</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">sungguh</span>
+                        <span class="bg-white border border-amber-300 text-amber-900 text-xs md:text-sm font-extrabold px-3 py-1 rounded-full">benar</span>
+                    </div>
+                </div>
+
+                <button id="btn-understood" class="btn-interactive w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-extrabold text-xl rounded-2xl shadow-lg flex items-center justify-center gap-2 border-b-4 border-indigo-900">
+                    <span>➡️ SAYA SUDAH FAHAM!</span>
+                </button>
+            </section>
+
+            <!-- 3. PAPARAN GAMEPLAY MISI DENGAN ANJURAN DINAMIK -->
+            <section id="screen-game" class="glass-card rounded-3xl p-5 md:p-8 hidden relative">
+                <!-- Mission Title Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-slate-100 pb-4 mb-5 gap-2">
+                    <div>
+                        <span id="game-mission-badge" class="bg-sky-100 text-sky-800 font-extrabold text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+                            MISI 1
+                        </span>
+                        <h2 id="game-mission-title" class="text-xl md:text-3xl font-extrabold text-slate-800 mt-1">
+                            Pilih Kata Yang Betul
+                        </h2>
+                    </div>
+                    <p id="game-mission-instruction" class="text-sm md:text-base font-semibold text-slate-500">
+                        Pilih kata penguat yang paling sesuai untuk melengkapkan ayat.
+                    </p>
+                </div>
+
+                <!-- Active Question Container -->
+                <div id="game-active-area">
+                    <!-- Dynamic question content injected by JS -->
+                </div>
+            </section>
+
+            <!-- 4. PAPARAN KEPUTUSAN AKHIR (Final Result Screen) -->
+            <section id="screen-result" class="glass-card rounded-3xl p-6 md:p-10 text-center hidden max-w-2xl mx-auto">
+                <!-- Trophy Icon SVG -->
+                <div class="w-32 h-32 mx-auto mb-4 relative bounce-gentle">
+                    <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+                        <circle cx="50" cy="50" r="45" fill="#FEF3C7"/>
+                        <!-- Trophy Cup -->
+                        <path d="M30,25 L70,25 L65,55 C65,65 55,70 50,70 C45,70 35,65 35,55 Z" fill="#F59E0B" stroke="#B45309" stroke-width="3"/>
+                        <path d="M35,28 L65,28 L62,52 C62,60 54,64 50,64 C46,64 38,60 38,52 Z" fill="#FBBF24"/>
+                        <!-- Handles -->
+                        <path d="M30,30 C18,30 18,50 33,50" fill="none" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M70,30 C82,30 82,50 67,50" fill="none" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
+                        <!-- Base -->
+                        <rect x="42" y="70" width="16" height="12" fill="#D97706"/>
+                        <rect x="30" y="82" width="40" height="10" fill="#78350F" rx="2"/>
+                        <!-- Star shine -->
+                        <polygon points="50,33 53,42 62,42 55,47 57,56 50,50 43,56 45,47 38,42 47,42" fill="#FFFFFF"/>
+                    </svg>
+                </div>
+
+                <h2 class="text-3xl md:text-5xl font-black text-amber-500 mb-1">
+                    🎉 TAHNIAH, <span id="res-player-name" class="text-indigo-600">MURID</span>! 🎉
+                </h2>
+                <p class="text-lg md:text-xl font-extrabold text-slate-700 mb-6">
+                    “Misi Kata Penguat Selesai!”
+                </p>
+
+                <!-- Score Badge Card -->
+                <div class="bg-gradient-to-br from-amber-50 via-sky-50 to-indigo-50 border-4 border-amber-300 p-6 rounded-3xl mb-6 shadow-sm">
+                    <div class="text-xs md:text-sm font-extrabold text-slate-500 uppercase tracking-wider">
+                        MARKAH AKHIR KAMU
+                    </div>
+                    <div class="text-4xl md:text-6xl font-black text-amber-600 my-2">
+                        <span id="res-score">0</span> <span class="text-2xl md:text-3xl text-slate-400">/ <span id="res-max-score">390</span></span>
+                    </div>
+
+                    <!-- Achievement Tier Badge -->
+                    <div class="mt-4">
+                        <div id="res-badge" class="inline-block bg-gradient-to-r from-amber-400 to-amber-600 text-white font-black px-6 py-2 rounded-full text-lg md:text-xl shadow-md">
+                            🌟 JUARA KATA PENGUAT
+                        </div>
+                    </div>
+
+                    <p id="res-message" class="text-base md:text-lg font-bold text-slate-700 mt-4 italic">
+                        “Teruskan berlatih! Kamu semakin hebat menggunakan kata penguat.”
+                    </p>
+                </div>
+
+                <!-- Navigation Action Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="btn-replay" class="btn-interactive py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-lg rounded-2xl shadow flex items-center justify-center gap-2 border-b-4 border-emerald-800">
+                        <span>🔄 MAIN SEMULA</span>
+                    </button>
+                    <button id="btn-home" class="btn-interactive py-3.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-extrabold text-lg rounded-2xl shadow flex items-center justify-center gap-2 border-b-4 border-indigo-800">
+                        <span>🏠 MENU UTAMA</span>
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- FEEDBACK DIALOG MODAL (No window.alert used) -->
+    <div id="feedback-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-card rounded-3xl p-6 max-w-md w-full text-center shadow-2xl transform transition-all scale-95 border-4 border-white">
+            <div id="feedback-icon" class="text-6xl mb-3">🎉</div>
+            <h3 id="feedback-title" class="text-2xl font-black mb-2">Hebat!</h3>
+            <p id="feedback-body" class="text-slate-700 font-bold text-base md:text-lg mb-6">Jawapan kamu betul!</p>
+            <button id="btn-feedback-next" class="btn-interactive w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold text-lg rounded-xl shadow-md border-b-4 border-indigo-900">
+                TERUSKAN ➡️
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Audio Engine using Web Audio API for smooth, zero-dependency sound effects
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    // Cheerful Arpeggio
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'wrong') {
+                    // Soft Low Warning Tone
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now); // A3
+                    osc.frequency.setValueAtTime(180, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'click') {
+                    // Cute Pop Click
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'fanfare') {
+                    // Level clear fanfare
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.15); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.3); // G5
+                    osc.frequency.setValueAtTime(1046.50, now + 0.45); // C6
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+                    osc.start(now);
+                    osc.stop(now + 0.9);
+                }
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
+        }
+
+        // Canvas Confetti Generator
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const ctx = confettiCanvas.getContext('2d');
+        let particles = [];
+
+        function resizeConfettiCanvas() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeConfettiCanvas);
+        resizeConfettiCanvas();
+
+        function triggerConfetti() {
+            particles = [];
+            const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#f43f5e'];
+            for (let i = 0; i < 70; i++) {
+                particles.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2 - 50,
+                    vx: (Math.random() - 0.5) * 16,
+                    vy: (Math.random() - 0.8) * 16,
+                    size: Math.random() * 10 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    rSpeed: (Math.random() - 0.5) * 10,
+                    life: 1
+                });
+            }
+            animateConfetti();
+        }
+
+        let confettiAnimationId = null;
+        function animateConfetti() {
+            if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            let alive = false;
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.3; // Gravity
+                p.rotation += p.rSpeed;
+                p.life -= 0.015;
+
+                if (p.life > 0) {
+                    alive = true;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.globalAlpha = Math.max(0, p.life);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                }
+            });
+            if (alive) {
+                confettiAnimationId = requestAnimationFrame(animateConfetti);
+            }
+        }
+
+        // GAME STATE
+        const state = {
+            playerName: '',
+            score: 0,
+            currentMission: 1, // 1 to 5
+            currentQuestionIndex: 0,
+            selectedMatchCard: null,
+            matchedCount: 0,
+            retryCount: 0
+        };
+
+        // QUESTION DATASETS FOR ALL MISSIONS
+        // Mission 1: Pilih Kata Yang Betul (10 Questions)
+        const mission1Questions = [
+            {
+                sentence: "Adik ______ comel.",
+                options: ["sangat", "nian", "agak"],
+                correct: "sangat",
+                hint: "Kata penguat 'sangat' diletakkan di hadapan kata adjektif 'comel'."
+            },
+            {
+                sentence: "Rumah itu ______ besar.",
+                options: ["amat", "sekali", "nian"],
+                correct: "amat",
+                hint: "Kata penguat 'amat' berada di hadapan kata adjektif 'besar'."
+            },
+            {
+                sentence: "Baju Aina cantik ______.",
+                options: ["sekali", "paling", "terlalu"],
+                correct: "sekali",
+                hint: "Kata penguat 'sekali' hadir di belakang kata adjektif 'cantik'."
+            },
+            {
+                sentence: "Cuaca hari ini ______ panas.",
+                options: ["terlalu", "nian", "sekali"],
+                correct: "terlalu",
+                hint: "Matahari amat terik, jadi cuaca 'terlalu' panas."
+            },
+            {
+                sentence: "Murid itu rajin ______.",
+                options: ["benar", "paling", "agak"],
+                correct: "benar",
+                hint: "Kata penguat 'benar' diletakkan di belakang kata adjektif 'rajin'."
+            },
+            {
+                sentence: "Pokok itu ______ tinggi.",
+                options: ["paling", "nian", "sekali"],
+                correct: "paling",
+                hint: "Gunakan 'paling' untuk membandingkan pokok yang tertinggi."
+            },
+            {
+                sentence: "Kek ini ______ manis.",
+                options: ["cukup", "nian", "sekali"],
+                correct: "cukup",
+                hint: "Kek rasa rasanya pas dan 'cukup' manis."
+            },
+            {
+                sentence: "Ali ______ gembira hari ini.",
+                options: ["sungguh", "nian", "sekali"],
+                correct: "sungguh",
+                hint: "Ali 'sungguh' gembira mendapat hadiah."
+            },
+            {
+                sentence: "Pemandangan pantai itu indah ______.",
+                options: ["nian", "paling", "agak"],
+                correct: "nian",
+                hint: "Kata penguat 'nian' sering digabungkan di belakang kata 'indah'."
+            },
+            {
+                sentence: "Air kolam itu ______ dalam.",
+                options: ["agak", "nian", "sekali"],
+                correct: "agak",
+                hint: "Kedalaman kolam itu sederhana, jadi ia 'agak' dalam."
+            }
+        ];
+
+        // Mission 2: Padankan Kata (Matching interactive cards)
+        const mission2Pairs = [
+            { id: 1, kata: "SANGAT", pairId: "A", frasa: "sangat cantik" },
+            { id: 2, kata: "TERLALU", pairId: "B", frasa: "terlalu panas" },
+            { id: 3, kata: "PALING", pairId: "C", frasa: "paling tinggi" },
+            { id: 4, kata: "AMAT", pairId: "D", frasa: "amat besar" },
+            { id: 5, kata: "SEKALI", pairId: "E", frasa: "manis sekali" }
+        ];
+
+        // Mission 3: Siapa Paling Tepat? (Visual based MCQs - 8 Questions)
+        const mission3Questions = [
+            {
+                svgEmoji: "☀️",
+                context: "Visual Matahari Terik",
+                sentence: "Hari ini matahari terbit amat terik. Cuaca ini ______ panas.",
+                options: ["terlalu", "nian", "sekali"],
+                correct: "terlalu",
+                hint: "Kepanasan matahari yang terlampau digambarkan dengan 'terlalu'."
+            },
+            {
+                svgEmoji: "🏔️",
+                context: "Gunung Kinabalu",
+                sentence: "Gunung Kinabalu ialah gunung ______ tinggi di Malaysia.",
+                options: ["paling", "nian", "agak"],
+                correct: "paling",
+                hint: "Gunung nombor satu paling tinggi!"
+            },
+            {
+                svgEmoji: "🐱",
+                context: "Anak Kucing Comel",
+                sentence: "Anak kucing bulu putih ini ______ comel!",
+                options: ["sangat", "nian", "makin"],
+                correct: "sangat",
+                hint: "Comel sekali! Kata penguat 'sangat' sesuai di hadapan comel."
+            },
+            {
+                svgEmoji: "🍰",
+                context: "Kek Hari Lahir",
+                sentence: "Kek coklat hari lahir me manis ______.",
+                options: ["sekali", "amat", "paling"],
+                correct: "sekali",
+                hint: "Kata 'sekali' diletakkan di belakang kata adjektif manis."
+            },
+            {
+                svgEmoji: "🏰",
+                context: "Istana Megah",
+                sentence: "Mahligai istana raja ini ______ besar dan tersergam indah.",
+                options: ["amat", "nian", "sekali"],
+                correct: "amat",
+                hint: "Istana bersaiz luar biasa 'amat' besar."
+            },
+            {
+                svgEmoji: "🌸",
+                context: "Taman Bunga",
+                sentence: "Bunga-bunga di taman ini indah ______.",
+                options: ["nian", "paling", "agak"],
+                correct: "nian",
+                hint: "Perkataan 'indah' selalunya berpasangan dengan 'nian'."
+            },
+            {
+                svgEmoji: "🎒",
+                context: "Beg Berat",
+                sentence: "Beg sekolah yang penuh dengan buku ini ______ berat.",
+                options: ["agak", "nian", "sekali"],
+                correct: "agak",
+                hint: "Beg itu mengandungi buku yang 'agak' berat."
+            },
+            {
+                svgEmoji: "🏎️",
+                context: "Kereta Lumba Laju",
+                sentence: "Kereta lumba merah itu memecut ______ laju.",
+                options: ["sungguh", "nian", "sekali"],
+                correct: "sungguh",
+                hint: "Larian kereta yang sangat pantas ialah 'sungguh' laju."
+            }
+        ];
+
+        // Mission 4: Betul atau Salah (Visual Statement evaluation - 8 Questions)
+        const mission4Questions = [
+            {
+                svgEmoji: "🔥",
+                statement: "Api unggun itu terlalu panas.",
+                isCorrect: true,
+                explanation: "Betul! Api memang terlalu panas."
+            },
+            {
+                svgEmoji: "🐢",
+                statement: "Kura-kura ini berjalan amat laju.",
+                isCorrect: false,
+                explanation: "Salah! Kura-kura berjalan perlahan, bukannya amat laju."
+            },
+            {
+                svgEmoji: "🐘",
+                statement: "Gajah itu amat besar.",
+                isCorrect: true,
+                explanation: "Betul! Gajah merupakan haiwan yang amat besar."
+            },
+            {
+                svgEmoji: "🌶️",
+                statement: "Cili merah ini manis sekali.",
+                isCorrect: false,
+                explanation: "Salah! Cili terasa pedas, bukannya manis sekali."
+            },
+            {
+                svgEmoji: "🥇",
+                statement: "Juara itu mendapat tempat paling atas.",
+                isCorrect: true,
+                explanation: "Betul! Juara berada di kedudukan paling atas."
+            },
+            {
+                svgEmoji: "🧊",
+                statement: "Ketulan ais ini terlalu panas.",
+                isCorrect: false,
+                explanation: "Salah! Ais adalah sejuk, bukannya terlalu panas."
+            },
+            {
+                svgEmoji: "🌺",
+                statement: "Bunga Raya ini cantik nian.",
+                isCorrect: true,
+                explanation: "Betul! Bunga Raya nampak indah dan cantik nian."
+            },
+            {
+                svgEmoji: "🍋",
+                statement: "Buah lemon ini manis sekali.",
+                isCorrect: false,
+                explanation: "Salah! Lemon terasa masam, bukannya manis sekali."
+            }
+        ];
+
+        // Mission 5 (Cabaran Juara): Mixed High Level Questions (10 Questions)
+        const mission5Questions = [
+            {
+                type: "mcq",
+                sentence: "Adik berasa ______ lapar kerana belum bersarapan.",
+                options: ["sangat", "nian", "sekali"],
+                correct: "sangat"
+            },
+            {
+                type: "mcq",
+                sentence: "Pemandangan pada waktu senja itu indah ______.",
+                options: ["nian", "paling", "terlalu"],
+                correct: "nian"
+            },
+            {
+                type: "mcq",
+                sentence: "Hari ini hujan turun ______ lebat.",
+                options: ["makin", "nian", "sekali"],
+                correct: "makin"
+            },
+            {
+                type: "mcq",
+                sentence: "Baju kurung ini mahal ______.",
+                options: ["benar", "paling", "terlalu"],
+                correct: "benar"
+            },
+            {
+                type: "mcq",
+                sentence: "Rumah di atas bukit itu ______ luas.",
+                options: ["cukup", "nian", "sekali"],
+                correct: "cukup"
+            },
+            {
+                type: "tf",
+                svgEmoji: "🚀",
+                statement: "Roket itu terbang paling tinggi ke angkasa.",
+                isCorrect: true,
+                explanation: "Betul! Roket memecut paling tinggi."
+            },
+            {
+                type: "tf",
+                svgEmoji: "🐌",
+                statement: "Siput itu bergerak amat laju.",
+                isCorrect: false,
+                explanation: "Salah! Siput bergerak sangat perlahan."
+            },
+            {
+                type: "mcq",
+                sentence: "Pahlawan itu ______ berani menentang musuh.",
+                options: ["sungguh", "nian", "sekali"],
+                correct: "sungguh"
+            },
+            {
+                type: "mcq",
+                sentence: "Budak itu ______ tinggi berbanding kawan-kawannya.",
+                options: ["paling", "nian", "benar"],
+                correct: "paling"
+            },
+            {
+                type: "mcq",
+                sentence: "Sambal tumis ibu ______ pedas tetapi sedap.",
+                options: ["agak", "nian", "sekali"],
+                correct: "agak"
+            }
+        ];
+
+        // DOM ELEMENTS
+        const screenStart = document.getElementById('screen-start');
+        const screenInfo = document.getElementById('screen-info');
+        const screenGame = document.getElementById('screen-game');
+        const screenResult = document.getElementById('screen-result');
+
+        const playerNameInput = document.getElementById('player-name-input');
+        const nameError = document.getElementById('name-error');
+        const btnStart = document.getElementById('btn-start');
+        const btnUnderstood = document.getElementById('btn-understood');
+        const btnReplay = document.getElementById('btn-replay');
+        const btnHome = document.getElementById('btn-home');
+
+        const hudBar = document.getElementById('hud-bar');
+        const hudPlayerName = document.getElementById('hud-player-name');
+        const hudMissionTitle = document.getElementById('hud-mission-title');
+        const hudQuestionCount = document.getElementById('hud-question-count');
+        const hudScore = document.getElementById('hud-score');
+
+        const feedbackModal = document.getElementById('feedback-modal');
+        const feedbackIcon = document.getElementById('feedback-icon');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackBody = document.getElementById('feedback-body');
+        const btnFeedbackNext = document.getElementById('btn-feedback-next');
+
+        // EVENT LISTENERS
+        btnStart.addEventListener('click', handleStartGame);
+        btnUnderstood.addEventListener('click', startMission1);
+        btnReplay.addEventListener('click', resetAndRestartGame);
+        btnHome.addEventListener('click', returnToHome);
+        btnFeedbackNext.addEventListener('click', closeFeedbackModal);
+
+        function showScreen(screen) {
+            screenStart.classList.add('hidden');
+            screenInfo.classList.add('hidden');
+            screenGame.classList.add('hidden');
+            screenResult.classList.add('hidden');
+
+            screen.classList.remove('hidden');
+        }
+
+        function handleStartGame() {
+            playSound('click');
+            const nameVal = playerNameInput.value.trim();
+            if (!nameVal) {
+                nameError.classList.remove('hidden');
+                playerNameInput.focus();
+                return;
+            }
+            nameError.classList.add('hidden');
+            state.playerName = nameVal;
+            hudPlayerName.textContent = nameVal;
+
+            showScreen(screenInfo);
+        }
+
+        function updateHUD() {
+            hudScore.textContent = state.score;
+        }
+
+        let activeFeedbackCallback = null;
+
+        function showFeedback(isCorrect, title, message, callback) {
+            playSound(isCorrect ? 'correct' : 'wrong');
+            
+            if (isCorrect) {
+                triggerConfetti();
+                feedbackIcon.textContent = "🎉";
+                feedbackTitle.textContent = title || "Hebat!";
+                feedbackTitle.className = "text-2xl md:text-3xl font-black text-emerald-600 mb-2";
+            } else {
+                feedbackIcon.textContent = "💡";
+                feedbackTitle.textContent = title || "Belum tepat.";
+                feedbackTitle.className = "text-2xl md:text-3xl font-black text-amber-600 mb-2";
+            }
+
+            feedbackBody.textContent = message;
+            activeFeedbackCallback = callback;
+            feedbackModal.classList.remove('hidden');
+        }
+
+        function closeFeedbackModal() {
+            playSound('click');
+            feedbackModal.classList.add('hidden');
+            if (activeFeedbackCallback) {
+                const cb = activeFeedbackCallback;
+                activeFeedbackCallback = null;
+                cb();
+            }
+        }
+
+        function startMission1() {
+            playSound('click');
+            state.currentMission = 1;
+            state.currentQuestionIndex = 0;
+            hudBar.classList.remove('hidden');
+            showScreen(screenGame);
+            renderMission1Question();
+        }
+
+        function renderMission1Question() {
+            updateHUD();
+            const q = mission1Questions[state.currentQuestionIndex];
+            
+            hudMissionTitle.textContent = "Misi 1: Pilih Kata";
+            hudQuestionCount.textContent = `${state.currentQuestionIndex + 1}/${mission1Questions.length}`;
+
+            document.getElementById('game-mission-badge').textContent = "MISI 1";
+            document.getElementById('game-mission-title').textContent = "Pilih Kata Yang Betul";
+            document.getElementById('game-mission-instruction').textContent = "Pilih kata penguat yang paling sesuai untuk melengkapkan tempat kosong.";
+
+            const activeArea = document.getElementById('game-active-area');
+
+            // Shuffle options visually while retaining values
+            const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+            activeArea.innerHTML = `
+                <div class="bg-gradient-to-r from-sky-50 to-indigo-50 border-3 border-sky-200 p-6 md:p-8 rounded-3xl text-center mb-6 shadow-sm">
+                    <div class="text-3xl md:text-4xl mb-4">✍️</div>
+                    <div class="text-2xl md:text-3xl font-extrabold text-slate-800 leading-relaxed">
+                        "${q.sentence.replace('______', '<span class="inline-block px-4 py-1 border-b-4 border-indigo-600 text-indigo-600 bg-white rounded-lg shadow-inner">______</span>')}"
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    ${shuffledOptions.map(opt => `
+                        <button onclick="checkMission1Answer('${opt}')" class="btn-interactive btn-choice py-4 px-6 bg-white hover:bg-sky-50 border-3 border-sky-300 hover:border-sky-500 rounded-2xl text-xl md:text-2xl font-black text-sky-900 shadow-md">
+                            ${opt}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        window.checkMission1Answer = function(selected) {
+            const q = mission1Questions[state.currentQuestionIndex];
+            if (selected === q.correct) {
+                state.score += 10;
+                updateHUD();
+                showFeedback(
+                    true,
+                    "🎉 Syabas! Jawapan Kamu Betul!",
+                    `"Bagus! ${q.sentence.replace('______', q.correct)}"`,
+                    () => {
+                        state.currentQuestionIndex++;
+                        if (state.currentQuestionIndex < mission1Questions.length) {
+                            renderMission1Question();
+                        } else {
+                            startMission2();
+                        }
+                    }
+                );
+            } else {
+                showFeedback(
+                    false,
+                    "💡 Cuba Lagi!",
+                    `${q.hint} Teruskan mencuba!`,
+                    () => {}
+                );
+            }
+        };
+
+        function startMission2() {
+            playSound('fanfare');
+            state.currentMission = 2;
+            state.selectedMatchCard = null;
+            state.matchedCount = 0;
+            renderMission2();
+        }
+
+        function renderMission2() {
+            updateHUD();
+            hudMissionTitle.textContent = "Misi 2: Padankan Kata";
+            hudQuestionCount.textContent = `5/5 Padanan`;
+
+            document.getElementById('game-mission-badge').textContent = "MISI 2";
+            document.getElementById('game-mission-title').textContent = "Padankan Kata Penguat";
+            document.getElementById('game-mission-instruction').textContent = "Klik pada Kata Penguat di sebelah kiri, kemudian klik Frasa yang sesuai di sebelah kanan.";
+
+            const leftItems = [...mission2Pairs].sort(() => Math.random() - 0.5);
+            const rightItems = [...mission2Pairs].sort(() => Math.random() - 0.5);
+
+            const activeArea = document.getElementById('game-active-area');
+
+            activeArea.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left Column: Kata Penguat -->
+                    <div class="space-y-3">
+                        <h4 class="text-center font-extrabold text-indigo-900 text-lg uppercase tracking-wider mb-2">1. Kata Penguat</h4>
+                        ${leftItems.map(item => `
+                            <div id="left-${item.id}" onclick="handleLeftClick(${item.id})" class="match-card bg-white border-3 border-slate-200 p-4 rounded-2xl text-center font-black text-xl text-slate-800 shadow-sm hover:border-sky-400">
+                                ${item.kata}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Right Column: Frasa -->
+                    <div class="space-y-3">
+                        <h4 class="text-center font-extrabold text-indigo-900 text-lg uppercase tracking-wider mb-2">2. Frasa Sesuai</h4>
+                        ${rightItems.map(item => `
+                            <div id="right-${item.id}" onclick="handleRightClick(${item.id})" class="match-card bg-white border-3 border-slate-200 p-4 rounded-2xl text-center font-black text-xl text-slate-800 shadow-sm hover:border-purple-400">
+                                "${item.frasa}"
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.handleLeftClick = function(id) {
+            playSound('click');
+            // Remove selection from previous left items
+            document.querySelectorAll('[id^="left-"]').forEach(el => el.classList.remove('selected'));
+            const clickedEl = document.getElementById(`left-${id}`);
+            if (clickedEl.classList.contains('matched')) return;
+
+            clickedEl.classList.add('selected');
+            state.selectedMatchCard = id;
+        };
+
+        window.handleRightClick = function(id) {
+            playSound('click');
+            if (!state.selectedMatchCard) {
+                showFeedback(false, "💡 Pilih Kata Dahulu!", "Sila klik kata penguat di sebelah kiri terlebih dahulu.", () => {});
+                return;
+            }
+
+            const rightEl = document.getElementById(`right-${id}`);
+            if (rightEl.classList.contains('matched')) return;
+
+            if (state.selectedMatchCard === id) {
+                // Correct match!
+                state.score += 10;
+                state.matchedCount++;
+                updateHUD();
+
+                const leftEl = document.getElementById(`left-${id}`);
+                leftEl.classList.remove('selected');
+                leftEl.classList.add('matched');
+                rightEl.classList.add('matched');
+
+                state.selectedMatchCard = null;
+
+                playSound('correct');
+                triggerConfetti();
+
+                if (state.matchedCount === mission2Pairs.length) {
+                    showFeedback(
+                        true,
+                        "⭐ Syabas! Semua Padanan Betul!",
+                        "Hebat! Kamu telah menyelesaikan Misi 2 dengan jayanya!",
+                        () => startMission3()
+                    );
+                }
+            } else {
+                // Incorrect match
+                showFeedback(
+                    false,
+                    "💡 Belum Tepat",
+                    "Padanan ini kurang sesuai. Cuba fikir semula dan padankan lagi!",
+                    () => {
+                        document.querySelectorAll('[id^="left-"]').forEach(el => el.classList.remove('selected'));
+                        state.selectedMatchCard = null;
+                    }
+                );
+            }
+        };
+
+        function startMission3() {
+            playSound('fanfare');
+            state.currentMission = 3;
+            state.currentQuestionIndex = 0;
+            renderMission3Question();
+        }
+
+        function renderMission3Question() {
+            updateHUD();
+            const q = mission3Questions[state.currentQuestionIndex];
+
+            hudMissionTitle.textContent = "Misi 3: Siapa Paling Tepat";
+            hudQuestionCount.textContent = `${state.currentQuestionIndex + 1}/${mission3Questions.length}`;
+
+            document.getElementById('game-mission-badge').textContent = "MISI 3";
+            document.getElementById('game-mission-title').textContent = "Siapa Paling Tepat?";
+            document.getElementById('game-mission-instruction').textContent = "Lihat gambar visual dan pilih kata penguat paling sesuai.";
+
+            const activeArea = document.getElementById('game-active-area');
+            const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+            activeArea.innerHTML = `
+                <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-3 border-amber-200 p-6 rounded-3xl text-center mb-6 shadow-sm">
+                    <div class="text-6xl md:text-7xl mb-3 bounce-gentle">${q.svgEmoji}</div>
+                    <div class="text-xl md:text-2xl font-extrabold text-slate-800">
+                        "${q.sentence.replace('______', '<span class="inline-block px-4 py-1 border-b-4 border-amber-600 text-amber-700 bg-white rounded-lg">______</span>')}"
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    ${shuffledOptions.map(opt => `
+                        <button onclick="checkMission3Answer('${opt}')" class="btn-interactive btn-choice py-4 px-6 bg-white hover:bg-amber-50 border-3 border-amber-300 hover:border-amber-500 rounded-2xl text-xl md:text-2xl font-black text-amber-900 shadow-md">
+                            🌟 ${opt}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        window.checkMission3Answer = function(selected) {
+            const q = mission3Questions[state.currentQuestionIndex];
+            if (selected === q.correct) {
+                state.score += 10;
+                updateHUD();
+                showFeedback(
+                    true,
+                    "🎉 Pilihan Kamu Sangat Tepat!",
+                    `"Hebat! ${q.sentence.replace('______', q.correct)}"`,
+                    () => {
+                        state.currentQuestionIndex++;
+                        if (state.currentQuestionIndex < mission3Questions.length) {
+                            renderMission3Question();
+                        } else {
+                            startMission4();
+                        }
+                    }
+                );
+            } else {
+                showFeedback(
+                    false,
+                    "💡 Belum Tepat",
+                    `${q.hint} Sila cuba lagi!`,
+                    () => {}
+                );
+            }
+        };
+
+        function startMission4() {
+            playSound('fanfare');
+            state.currentMission = 4;
+            state.currentQuestionIndex = 0;
+            renderMission4Question();
+        }
+
+        function renderMission4Question() {
+            updateHUD();
+            const q = mission4Questions[state.currentQuestionIndex];
+
+            hudMissionTitle.textContent = "Misi 4: Betul / Salah";
+            hudQuestionCount.textContent = `${state.currentQuestionIndex + 1}/${mission4Questions.length}`;
+
+            document.getElementById('game-mission-badge').textContent = "MISI 4";
+            document.getElementById('game-mission-title').textContent = "Betul atau Salah?";
+            document.getElementById('game-mission-instruction').textContent = "Baca ayat dan kaji gambar, kemudian tentukan sama ada ayat itu Betul atau Salah.";
+
+            const activeArea = document.getElementById('game-active-area');
+
+            activeArea.innerHTML = `
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border-3 border-emerald-200 p-6 rounded-3xl text-center mb-6 shadow-sm">
+                    <div class="text-6xl md:text-7xl mb-3 bounce-gentle">${q.svgEmoji}</div>
+                    <div class="text-2xl md:text-3xl font-black text-slate-800">
+                        "${q.statement}"
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="checkMission4Answer(true)" class="btn-interactive py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-2xl md:text-3xl rounded-2xl shadow-lg border-b-4 border-emerald-800">
+                        ✅ BETUL
+                    </button>
+                    <button onclick="checkMission4Answer(false)" class="btn-interactive py-5 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-black text-2xl md:text-3xl rounded-2xl shadow-lg border-b-4 border-rose-800">
+                        ❌ SALAH
+                    </button>
+                </div>
+            `;
+        }
+
+        window.checkMission4Answer = function(userChoice) {
+            const q = mission4Questions[state.currentQuestionIndex];
+            if (userChoice === q.isCorrect) {
+                state.score += 10;
+                updateHUD();
+                showFeedback(
+                    true,
+                    "🎉 Tepat Sekali!",
+                    q.explanation,
+                    () => {
+                        state.currentQuestionIndex++;
+                        if (state.currentQuestionIndex < mission4Questions.length) {
+                            renderMission4Question();
+                        } else {
+                            startMission5();
+                        }
+                    }
+                );
+            } else {
+                showFeedback(
+                    false,
+                    "💡 Fikir Semula",
+                    `Belum tepat. ${q.explanation}`,
+                    () => {}
+                );
+            }
+        };
+
+        function startMission5() {
+            playSound('fanfare');
+            state.currentMission = 5;
+            state.currentQuestionIndex = 0;
+            renderMission5Question();
+        }
+
+        function renderMission5Question() {
+            updateHUD();
+            const q = mission5Questions[state.currentQuestionIndex];
+
+            hudMissionTitle.textContent = "Misi Akhir: Cabaran Juara";
+            hudQuestionCount.textContent = `${state.currentQuestionIndex + 1}/${mission5Questions.length}`;
+
+            document.getElementById('game-mission-badge').textContent = "CABARAN JUARA";
+            document.getElementById('game-mission-title').textContent = "👑 Misi Akhir: Cabaran Juara";
+            document.getElementById('game-mission-instruction').textContent = "Selesaikan cabaran akhir ini untuk bergelar Juara Kata Penguat!";
+
+            const activeArea = document.getElementById('game-active-area');
+
+            if (q.type === 'mcq') {
+                const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+                activeArea.innerHTML = `
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border-3 border-purple-200 p-6 md:p-8 rounded-3xl text-center mb-6 shadow-sm">
+                        <div class="text-4xl mb-3">🏆</div>
+                        <div class="text-2xl md:text-3xl font-extrabold text-slate-800">
+                            "${q.sentence.replace('______', '<span class="inline-block px-4 py-1 border-b-4 border-purple-600 text-purple-700 bg-white rounded-lg">______</span>')}"
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        ${shuffledOptions.map(opt => `
+                            <button onclick="checkMission5Answer('${opt}')" class="btn-interactive btn-choice py-4 px-6 bg-white hover:bg-purple-50 border-3 border-purple-300 hover:border-purple-500 rounded-2xl text-xl md:text-2xl font-black text-purple-900 shadow-md">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (q.type === 'tf') {
+                activeArea.innerHTML = `
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border-3 border-purple-200 p-6 rounded-3xl text-center mb-6 shadow-sm">
+                        <div class="text-6xl mb-3 bounce-gentle">${q.svgEmoji}</div>
+                        <div class="text-2xl md:text-3xl font-black text-slate-800">
+                            "${q.statement}"
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="checkMission5Answer(true)" class="btn-interactive py-5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-2xl md:text-3xl rounded-2xl shadow-lg border-b-4 border-emerald-800">
+                            ✅ BETUL
+                        </button>
+                        <button onclick="checkMission5Answer(false)" class="btn-interactive py-5 bg-gradient-to-r from-rose-500 to-pink-600 text-white font-black text-2xl md:text-3xl rounded-2xl shadow-lg border-b-4 border-rose-800">
+                            ❌ SALAH
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        window.checkMission5Answer = function(answer) {
+            const q = mission5Questions[state.currentQuestionIndex];
+            let isCorrect = false;
+
+            if (q.type === 'mcq' && answer === q.correct) isCorrect = true;
+            if (q.type === 'tf' && answer === q.isCorrect) isCorrect = true;
+
+            if (isCorrect) {
+                state.score += 10;
+                updateHUD();
+                showFeedback(
+                    true,
+                    "🎉 Jawapan Mantap!",
+                    "Syabas! Kamu semakin hampir bergelar Juara Kata Penguat!",
+                    () => {
+                        state.currentQuestionIndex++;
+                        if (state.currentQuestionIndex < mission5Questions.length) {
+                            renderMission5Question();
+                        } else {
+                            showFinalResults();
+                        }
+                    }
+                );
+            } else {
+                showFeedback(
+                    false,
+                    "💡 Cuba Lagi",
+                    q.explanation || "Cuba semak semula pilihan kata penguat kamu.",
+                    () => {}
+                );
+            }
+        };
+
+        function showFinalResults() {
+            playSound('fanfare');
+            triggerConfetti();
+
+            hudBar.classList.add('hidden');
+            showScreen(screenResult);
+
+            const maxScore = (10 + 5 + 8 + 8 + 10) * 10; // Total 410 max score
+            const percentage = Math.round((state.score / maxScore) * 100);
+
+            document.getElementById('res-player-name').textContent = state.playerName.toUpperCase();
+            document.getElementById('res-score').textContent = state.score;
+            document.getElementById('res-max-score').textContent = maxScore;
+
+            const badgeEl = document.getElementById('res-badge');
+            const msgEl = document.getElementById('res-message');
+
+            if (percentage >= 90) {
+                badgeEl.textContent = "🌟 JUARA KATA PENGUAT 👑";
+                badgeEl.className = "inline-block bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-white font-black px-6 py-2.5 rounded-full text-lg md:text-2xl shadow-md tracking-wide";
+                msgEl.textContent = "“Luar biasa! Kamu adalah JUARA KATA PENGUAT sejati! Teruskan kecemerlangan!”";
+            } else if (percentage >= 70) {
+                badgeEl.textContent = "⭐ HEBAT 🥈";
+                badgeEl.className = "inline-block bg-gradient-to-r from-sky-400 to-indigo-600 text-white font-black px-6 py-2.5 rounded-full text-lg md:text-2xl shadow-md tracking-wide";
+                msgEl.textContent = "“Syabas! Penguasaan kata penguat kamu sangat baik dan hebat!”";
+            } else if (percentage >= 50) {
+                badgeEl.textContent = "👍 BAGUS 🥉";
+                badgeEl.className = "inline-block bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black px-6 py-2.5 rounded-full text-lg md:text-2xl shadow-md tracking-wide";
+                msgEl.textContent = "“Bagus! Kamu telah berusaha dengan baik. Teruskan latihan untuk menjadi juara!”";
+            } else {
+                badgeEl.textContent = "💪 TERUSKAN USAHA 🌱";
+                badgeEl.className = "inline-block bg-gradient-to-r from-orange-400 to-rose-500 text-white font-black px-6 py-2.5 rounded-full text-lg md:text-2xl shadow-md tracking-wide";
+                msgEl.textContent = "“Jangan putus asa! Teruskan berlatih, kamu pasti akan lebih hebat nanti!”";
+            }
+        }
+
+        function resetAndRestartGame() {
+            playSound('click');
+            state.score = 0;
+            state.currentMission = 1;
+            state.currentQuestionIndex = 0;
+            state.selectedMatchCard = null;
+            state.matchedCount = 0;
+
+            startMission1();
+        }
+
+        function returnToHome() {
+            playSound('click');
+            state.score = 0;
+            state.playerName = '';
+            playerNameInput.value = '';
+            hudBar.classList.add('hidden');
+            showScreen(screenStart);
+        }
+    </script>
+</body>
+</html>
+
+
